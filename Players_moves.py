@@ -32,4 +32,4 @@ while True:
     statement, guess_play_ground  = checking_for_hits(coordinates,opp_play_ground,guess_play_ground)
     print (statement)
     print (guess_play_ground)
-
+    
