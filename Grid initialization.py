@@ -56,7 +56,9 @@ def place_boat(play_grid,selected_boat):
                 play_grid[y+i, x] = 1
                 coordinates.append((y+i, x))
             placed = True
-         
+        
+        print(f"{name} placed successfully!")
+        print(play_grid)
         return play_grid, coordinates
     
 players = ['Amedeo', 'Sofia']
@@ -88,6 +90,8 @@ for player in players:
 
         play_grid, coords = place_boat(play_grid,selected_boat)
         player_boats[player][selected_boat[0]] = coords
+    
+    print(f"\nAll boats placed for {player}!")
+    print(play_grid)
 
-    print("\nNo subjects left. Program ended.")
-
+print(f"\nAll boats placed for both players!")  
