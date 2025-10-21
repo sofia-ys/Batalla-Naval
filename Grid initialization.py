@@ -55,7 +55,7 @@ def place_boat(play_grid,selected_boat):
         x_letter = coord[0]
         y_number = coord[1:]
 
-        x = ord(x_letter) - 65   
+        x = ord(x_letter) - 65    
         y = int(y_number) - 1    
 
         if x < 0 or x >= size or y < 0 or y >= size:
@@ -114,19 +114,17 @@ for player in players:
             play_grid, coords = place_boat_random(play_grid, selected_boat)
             player_boats[player][selected_boat[0]] = coords
         boats.clear()
+
     else: #If chosen to place manually
         while boats:  # Keep running while there are boats left
             print("\nAvailable boats:")
             for i, boat in enumerate(boats, 1):
                 print(f"{i}. {boat}")
-
             choice = input("Choose a boat by number: ")
-
             # Validate input
             if not choice.isdigit() or not (1 <= int(choice) <= len(boats)):
                 print("Invalid choice. Try again.")
                 continue
-
             # Convert to index
             index = int(choice) - 1
             selected_boat = boats.pop(index)  # remove it from the list
