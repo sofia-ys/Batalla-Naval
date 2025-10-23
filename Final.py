@@ -181,26 +181,49 @@ class Player:
         """Perform attack on opponent's board with retry if invalid"""
         while True:
             coord = input(f"{self.name}, enter target (e.g., B7): ").strip().upper()
+            letter = ''.join([c for c in coord if c.isalpha()])
+            digits = ''.join([c for c in coord if c.isdigit()])
+            if not letter or not digits:
+                print("Invalid coordinates. Try again.")
+                continue
+            try:
+                num = int(digits)
+            except ValueError:
+                print("Invalid coordinates. Try again.")
+                continue
+            # Check redundancy on guess board
+            if letter in self.guess_board.grid.index and num in self.guess_board.grid.columns:
+                prev_status = self.guess_board.grid.loc[letter, num]
+                if prev_status == 1 or prev_status == -1:
+                    print("You already shot here, try aiming elsewhere.")
+                    continue
+
             result = opponent.board.receive_attack(coord)
 
             if result == "invalid":
                 print("Invalid coordinates. Try again.")
                 continue
 
-            letter = ''.join([c for c in coord if c.isalpha()])
-            num = int(''.join([c for c in coord if c.isdigit()]))
-
             if isinstance(result, Ship):
                 self.guess_board.grid.loc[letter, num] = 1
                 print(f"{self.name} HIT {opponent.name}'s ship!")
                 if result.is_sunk():
                     print(f"{self.name} sank {opponent.name}'s {result.name}!")
+                    # Change all relevant cells from 1 to 2 on BOTH boards
+                    for (y, x) in result.coordinates:
+                        # mark on opponent real board
+                        opponent.board.grid.iat[y, x] = 2
+                        # mark on guessing board
+                        guess_letter = chr(y + ord('A'))
+                        guess_num = x + 1
+                        self.guess_board.grid.loc[guess_letter, guess_num] = 2
             elif result is None:
                 self.guess_board.grid.loc[letter, num] = -1
                 print(f"{self.name} MISSED.")
             else:
                 print(result)
             break  # only break when valid coordinate was given
+
 
     def all_sunk(self):
         return self.board.all_sunk()
