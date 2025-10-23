@@ -138,7 +138,9 @@ class Player:
         return all(boat.is_sunk() for boat in self.boats)
 
 def main():
-    players = [Player('Amedeo'), Player('Sofia')]
+    player1 = input('Whats your name player 1?:')
+    player2 = input('Whats your name player 2?:')
+    players = [Player(player1), Player('player2')]
     boats_to_place = [('Aircraft carrier', 5), ('Battleship', 4), ('Cruiser', 3), ('Submarine', 3), ('MineSweeper', 2)]
 
     # Placement phase
