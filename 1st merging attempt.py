@@ -26,11 +26,11 @@ def place_boat(play_ground, selected_boat):
             print("Invalid format. Use e.g. D10 or B3.")
             continue
 
-        x_letter = coord[0]
-        y_number = coord[1:]
+        y_letter = coord[0]
+        x_number = coord[1:]
 
-        x = ord(x_letter) - ord('A')  # 'A' → 0, 'J' → 9
-        y = int(y_number) - 1         # '1' → 0, '10' → 9
+        y = ord(y_letter) - ord('A')  # 'A' → 0, 'J' → 9
+        x = int(x_number) - 1         # '1' → 0, '10' → 9
 
         # Check out of range
         if x < 0 or x >= size or y < 0 or y >= size:
@@ -134,8 +134,9 @@ while True:
     # Retrieve opponent's grid and current player's guess grid:
     statement, new_guess_grid = checking_for_hits(coordinates, player_grids[opponent], guess_grids[current_player])
     guess_grids[current_player] = new_guess_grid
-    print(statement)
     print(new_guess_grid)
+    print(statement)
+    
 
     # Swap turns
     current_player_index, other_player_index = other_player_index, current_player_index
