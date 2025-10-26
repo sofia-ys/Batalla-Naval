@@ -239,7 +239,7 @@ def battleship_ui():
                         # update guess board 
                         if isinstance(result, Ship):
                             attacker.guess_board.grid.loc[letter, gx + 1] = 2  # mark hit as red
-                            result_message = f"HIT {defender.name}'s {result.name}!"
+                            result_message = f"HIT!"
                             if result.is_sunk():
                                 result_message = f"You sank {defender.name}'s {result.name}!"
                         elif result is None:
