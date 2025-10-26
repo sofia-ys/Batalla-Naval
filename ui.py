@@ -288,7 +288,7 @@ def battleship_ui():
         elif state == END:
             winner = players[current].name
             # choose the image based on current player
-            screen.blit(win_images[current], (0, 0))  # fullscreen
+            screen.blit(win_images[winner], (0, 0))  # fullscreen
             pygame.display.flip()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
