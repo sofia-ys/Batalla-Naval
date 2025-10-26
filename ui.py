@@ -4,7 +4,7 @@ from Final import Ship, Player, Game
 pygame.init()
 
 # constants
-tile_size, margin = 50, 5
+tile_size, margin = 40, 4
 fps = 30
 
 # colours for the grid
@@ -25,9 +25,9 @@ font = pygame.font.SysFont("arial", 24)
 big_font = pygame.font.SysFont("arial", 48)
 
 # writing text on screen
-def draw_text(surface, text, x, y, size=24, color=white):
+def draw_text(surface, text, x, y, size=24, colour=white):
     f = pygame.font.SysFont("arial", size)
-    t = f.render(text, True, color)
+    t = f.render(text, True, colour)
     surface.blit(t, (x, y))  # placing the text onto the surface
 
 # loading in the buttons
@@ -53,30 +53,43 @@ selected_buttons = {
     "p2_random": False,
 }
 
+# load images for player switch screens
+switch_images = {
+    "p1": pygame.image.load("images/switch_p1.png"),
+    "p2": pygame.image.load("images/switch_p2.png") 
+}
+
+# load images for player win screens
+win_images = {
+    "p1": pygame.image.load("images/win_p1.png"),
+    "p2": pygame.image.load("images/win_p2.png") 
+}
+
 # drawing these buttons onto the screen
 def draw_button_image(key, rect, mouse_pos):
     # show hover image if hovered or if selected
-    if rect.collidepoint(mouse_pos) or selected_buttons[key]:
-        img = pygame.transform.scale(button_hover_images[key], (rect.width, rect.height))
+    if rect.collidepoint(mouse_pos) or selected_buttons[key]:  # if the mouse is hovering over it or if its selected state is set to true
+        img = pygame.transform.scale(button_hover_images[key], (rect.width, rect.height))  # use the hover image
     else:
         img = pygame.transform.scale(button_images[key], (rect.width, rect.height))
-    screen.blit(img, rect.topleft)
+    screen.blit(img, rect.topleft)  # place the button image onto the screen 
 
+# drawing the board onto the screen
 def draw_board(board, offset_x, offset_y, reveal=False, is_guess=False):
     for row in range(board.size):
         for col in range(board.size):
             val = board.grid.iat[row, col]
 
-            # Default color
-            color = blue
+            # default colour
+            colour = blue
 
-            # Show ships only if reveal is True (for own fleet)
+            # show ships only if reveal is True (for own fleet)
             if val == 1 and reveal and not is_guess:
-                color = green
-            elif val == 2:  # hit (ship damaged)
-                color = red
+                colour = green
+            elif val == 2:  # hit 
+                colour = red
             elif val == -1:  # miss
-                color = grey
+                colour = grey
 
             rect = pygame.Rect(
                 offset_x + col * (tile_size + margin),
@@ -84,35 +97,33 @@ def draw_board(board, offset_x, offset_y, reveal=False, is_guess=False):
                 tile_size,
                 tile_size,
             )
-            pygame.draw.rect(screen, color, rect)
+            pygame.draw.rect(screen, colour, rect)
             pygame.draw.rect(screen, white, rect, 2)
 
 # --- GAME STATES ---
-MENU = "menu"
-PLACEMENT = "placement"
-PLAYING = "playing"
-SWITCH = "switch"
-END = "end"
+MENU = "menu"  # this is the loading screen where the manual/random mode is selected
+PLACEMENT = "placement"  # this is the manual selection mode
+PLAYING = "playing"  # active game play
+SWITCH = "switch"  # switching between players
+END = "end"  # end screen
 
 def battleship_ui():
-    state = MENU
-    game = Game()
-    player_modes = {"p1": None, "p2": None}
-    players = {"p1": None, "p2": None}
-    current = "p1"
+    state = MENU  # we start with the menu
+    game = Game()  # initialise the game defined in the Final.py file
+    player_modes = {"p1": None, "p2": None}  # default empty but this is where the manual/random selection gets updated into
+    players = {"p1": None, "p2": None}  # storing the player instances that we will call later from the class made in Final.py
+    current = "p1"  # turn tracking default
     opponent = "p2"
-    current_ship_idx = 0
-    placing_dir = "H"
+    current_ship_idx = 0  # default ship index (so we always start with the biggest one)
+    placing_dir = "H"  # default placing direction (which can be switched to vertical)
 
     while True:
-        screen.fill(black)
+        screen.fill(black)  # background
         if state == MENU:
-            if loading_bg:
-                screen.blit(loading_bg, (0, 0))
+            screen.blit(loading_bg, (0, 0)) 
+            draw_text(screen, "Left: Player 1   |   Right: Player 2", 400, 650)
 
-            draw_text(screen, "Left: Player 1   |   Right: Player 2", 480, 110)
-
-            # Define button positions and sizes based on loading screen size
+            # button positions and sizes 
             button_width, button_height = 180, 50
             buttons = {
                 "p1_manual": pygame.Rect(100, 250, button_width, button_height),
@@ -121,28 +132,31 @@ def battleship_ui():
                 "p2_random": pygame.Rect(744, 330, button_width, button_height),
             }
 
-            # Draw button images
-            mouse_pos = pygame.mouse.get_pos()
+            # drawing button images
+            mouse_pos = pygame.mouse.get_pos()  # we need to know mouse position for the hover
             for key, rect in buttons.items():
                 draw_button_image(key, rect, mouse_pos)
 
             for event in pygame.event.get():
+                # handling closing the game
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                # now processing whether we clicked the button and which ones we clicked
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     for key, rect in buttons.items():
-                        if rect.collidepoint(event.pos):
-                            pkey, mode = key.split("_")
-                            player_modes[pkey] = mode
+                        if rect.collidepoint(event.pos):  # if we're clicking down on the button
+                            pkey, mode = key.split("_")  # the keys are "p1_manual, p2_manual" etc so we're splitting into p1 component and manual thign
+                            player_modes[pkey] = mode  # now just using the info of which button we picked and setting that into the game mode
                             
-                            # Mark the clicked button as selected and unselect the other button of the same player
-                            for k in buttons:
-                                if k.startswith(pkey):
-                                    selected_buttons[k] = (k == key)
+                            for k in buttons:  # for all button keys (the four dif buttons)
+                                if k.startswith(pkey):  # if the button belongs to the same player as the clicked button
+                                    selected_buttons[k] = (k == key)  # updating to change the selction
 
-                            # Once both modes are chosen, initialize players
+                            # when we've selected two buttons (aka both players now have a mode) we start the game
                             if all(player_modes.values()):
-                                players["p1"] = Player("Player 1")
+                                players["p1"] = Player("Player 1")  # creating instances of the players
                                 players["p2"] = Player("Player 2")
                                 for pid, mode in player_modes.items():
                                     if mode == "random":
@@ -151,10 +165,10 @@ def battleship_ui():
                                             players[pid].board.place_ship_random(ship)
                                             players[pid].board.ships.append(ship)
                                     else:
-                                        state = PLACEMENT
+                                        state = PLACEMENT  # since we have a manual mode, we go into placement mode
                                         current = pid
                                         current_ship_idx = 0
-                                # If both are random, start playing
+                                # if both are random, start playing
                                 if all(mode == "random" for mode in player_modes.values()):
                                     state = PLAYING
 
@@ -162,9 +176,9 @@ def battleship_ui():
             player = players[current]
             ships = game.ships_to_place
             if current_ship_idx >= len(ships):
-                # Done placing for this player
+                # done placing for this player
                 if current == "p1":
-                    # If player 2 still manual
+                    # if player 2 still manual
                     if player_modes["p2"] == "manual":
                         current = "p2"
                         current_ship_idx = 0
@@ -174,20 +188,22 @@ def battleship_ui():
                     state = PLAYING
             else:
                 ship_name, ship_len = ships[current_ship_idx]
-                draw_text(screen, f"{player.name}: Place {ship_name} (size {ship_len})", 450, 40, 30)
-                draw_text(screen, f"Press R to rotate ({placing_dir})", 520, 80, 24)
-                draw_board(player.board, 350, 150, reveal=True)
+                draw_text(screen, f"{player.name}: Place {ship_name} (size {ship_len})", 335, 40, 30)
+                draw_text(screen, f"Press R to rotate ({placing_dir})", 460, 80, 24)
+                draw_board(player.board, 320, 150, reveal=True)
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
+                        pygame.quit()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                         pygame.quit()
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                         placing_dir = "V" if placing_dir == "H" else "H"
                     elif event.type == pygame.MOUSEBUTTONDOWN:
-                        mx, my = event.pos
-                        gx = (mx - 350) // (tile_size + margin)
+                        mx, my = event.pos  # getting the mouse position
+                        gx = (mx - 320) // (tile_size + margin)  # equivalent grid position
                         gy = (my - 150) // (tile_size + margin)
                         if 0 <= gx < 10 and 0 <= gy < 10:
-                            s = Ship(ship_name, ship_len)
+                            s = Ship(ship_name, ship_len)  # making the ship if it's in the boundaries
                             success, _ = s.place((gy, gx), placing_dir, player.board)
                             if success:
                                 player.board.ships.append(s)
@@ -196,30 +212,33 @@ def battleship_ui():
                                 current_ship_idx += 1
 
         elif state == PLAYING:
-            attacker = players[current]
+            attacker = players[current]  # defining the player based on the turn
             defender = players[opponent]
-            draw_text(screen, f"{attacker.name}'s Turn", 560, 40, 36)
-            draw_text(screen, "Your Fleet", 200, 100)
-            draw_text(screen, "Your Shots", 850, 100)
-            draw_board(attacker.board, 200, 150, reveal=True)
-            draw_board(attacker.guess_board, 850, 150, is_guess=True)
-
+            draw_text(screen, f"{attacker.name}'s Turn", 400, 40, 36)
+            draw_text(screen, "Your Fleet", 50, 100)
+            draw_text(screen, "Your Shots", 550, 100)
+            draw_board(attacker.board, 50, 150, reveal=True)
+            draw_board(attacker.guess_board, 550, 150, is_guess=True)
 
             result_message = None  # store result to show for a second
 
             for event in pygame.event.get():
+                # handling the quit game
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                # processing where the player chooses
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     mx, my = event.pos
-                    gx = (mx - 850) // (tile_size + margin)
+                    gx = (mx - 550) // (tile_size + margin)
                     gy = (my - 150) // (tile_size + margin)
                     if 0 <= gx < 10 and 0 <= gy < 10:
                         letter = chr(gy + ord("A"))
-                        coord = f"{letter}{gx + 1}"
+                        coord = f"{letter}{gx + 1}"  # turning the mouse click into a coordinate for the class fucntion to work
                         result = defender.board.receive_attack(coord)
 
-                        # update guess board properly
+                        # update guess board 
                         if isinstance(result, Ship):
                             attacker.guess_board.grid.loc[letter, gx + 1] = 2  # mark hit as red
                             result_message = f"HIT {defender.name}'s {result.name}!"
@@ -233,12 +252,12 @@ def battleship_ui():
 
                         # redraw boards to show the result
                         screen.fill(black)
-                        draw_text(screen, f"{attacker.name}'s Turn", 560, 40, 36)
-                        draw_text(screen, "Your Fleet", 200, 100)
-                        draw_text(screen, "Your Shots", 850, 100)
-                        draw_board(attacker.board, 200, 150, reveal=True)
-                        draw_board(attacker.guess_board, 850, 150)
-                        draw_text(screen, result_message, 550, 680, 30, green if "HIT" in result_message or "sank" in result_message else white)
+                        draw_text(screen, f"{attacker.name}'s Turn", 400, 40, 36)
+                        draw_text(screen, "Your Fleet", 50, 100)
+                        draw_text(screen, "Your Shots", 550, 100)
+                        draw_board(attacker.board, 50, 150, reveal=True)
+                        draw_board(attacker.guess_board, 550, 150)
+                        draw_text(screen, result_message, 400, 635, 30, green if "HIT" in result_message or "sank" in result_message else white)
                         pygame.display.flip()
                         pygame.time.wait(1000)  # wait 1 second to show result
 
@@ -250,20 +269,31 @@ def battleship_ui():
                             state = SWITCH
 
         elif state == SWITCH:
-            draw_text(screen, f"Next turn: {players[current].name}", 500, 330, 40)
-            draw_text(screen, "Click to continue...", 540, 380, 28)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    state = PLAYING
+            # choose the image based on current player
+            screen.blit(switch_images[current], (0, 0))  # fullscreen
+            pygame.display.flip()
+
+            waiting = True
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        waiting = False  # exit loop
+                        state = PLAYING
+
 
         elif state == END:
             winner = players[current].name
-            draw_text(screen, f"{winner} WINS!", 540, 330, 48)
-            draw_text(screen, "Click to restart", 560, 380, 30)
+            # choose the image based on current player
+            screen.blit(win_images[current], (0, 0))  # fullscreen
+            pygame.display.flip()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    pygame.quit()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     pygame.quit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     return battleship_ui()  # restart game
