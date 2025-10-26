@@ -79,10 +79,8 @@ def draw_board(board, offset_x, offset_y, reveal=False, is_guess=False):
     for row in range(board.size):
         for col in range(board.size):
             val = board.grid.iat[row, col]
-
             # default colour
             colour = blue
-
             # show ships only if reveal is True (for own fleet)
             if val == 1 and reveal and not is_guess:
                 colour = green
@@ -100,7 +98,7 @@ def draw_board(board, offset_x, offset_y, reveal=False, is_guess=False):
             pygame.draw.rect(screen, colour, rect)
             pygame.draw.rect(screen, white, rect, 2)
 
-# --- GAME STATES ---
+# game states (different types of things that could be happenign type of thign)
 MENU = "menu"  # this is the loading screen where the manual/random mode is selected
 PLACEMENT = "placement"  # this is the manual selection mode
 PLAYING = "playing"  # active game play
@@ -286,9 +284,8 @@ def battleship_ui():
 
 
         elif state == END:
-            winner = players[current].name
             # choose the image based on current player
-            screen.blit(win_images[winner], (0, 0))  # fullscreen
+            screen.blit(win_images[current], (0, 0))  # fullscreen
             pygame.display.flip()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
